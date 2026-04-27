@@ -50,11 +50,37 @@ import {
 
 const STEPS = {
   LANDING: 0,
-  DETAILS: 1,
-  SELECTION: 2,
+  SELECTION: 1,
+  DETAILS: 2,
   PAYMENT: 3,
   SUCCESS: 4,
   ADMIN: 5,
+};
+
+const calculatePrice = (slots: string[]) => {
+  return slots.reduce((total, slot) => {
+    // Expected format: "8:00 AM"
+    const [time, ampm] = slot.split(' ');
+    const [hourStr] = time.split(':');
+    let hour = parseInt(hourStr);
+    
+    if (ampm === 'PM' && hour !== 12) hour += 12;
+    if (ampm === 'AM' && hour === 12) hour = 0;
+    
+    // Day rate: 8 AM to 4 PM (16:00)
+    // Nightrate: 4 PM (16:00) onwards and before 8 AM
+    if (hour >= 8 && hour < 16) {
+      return total + 500;
+    }
+    return total + 550;
+  }, 0);
+};
+
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('en-PH', {
+    style: 'currency',
+    currency: 'PHP',
+  }).format(price);
 };
 
 const COLORS = {
@@ -84,6 +110,7 @@ type Booking = {
   court: string;
   date: string;
   timeSlots: string[];
+  totalPrice: number;
   status: 'confirmed' | 'blocked';
   timestamp: number;
   proofOfPaymentUrl?: string;
@@ -142,17 +169,22 @@ const DetailsStep = ({ prevStep, nextStep, formData, updateFormData }: DetailsSt
     >
       <header className="flex justify-between items-center mb-12">
         <button onClick={prevStep} className="flex items-center text-white/40 hover:text-[#F9E154] transition-colors font-bold uppercase text-[10px] tracking-widest">
-          <ChevronLeft size={16} /> Back to Start
+          <ChevronLeft size={16} /> Back to Selection
         </button>
         <div className="flex gap-4 items-center">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-[#F9E154] text-[#2D3A2A] flex items-center justify-center text-[10px] font-bold">1</div>
+              <div className="w-5 h-5 rounded-full bg-white/10 text-white/50 flex items-center justify-center text-[10px] font-bold border border-white/5">1</div>
+              <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">Selection</span>
+            </div>
+            <div className="w-4 h-[1px] bg-white/10"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-[#F9E154] text-[#2D3A2A] flex items-center justify-center text-[10px] font-bold">2</div>
               <span className="text-[10px] font-bold uppercase text-white tracking-widest">Renter</span>
             </div>
             <div className="w-4 h-[1px] bg-white/10"></div>
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-white/10 text-white/50 flex items-center justify-center text-[10px] font-bold border border-white/5">2</div>
-              <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">Selection</span>
+              <div className="w-5 h-5 rounded-full bg-white/10 text-white/50 flex items-center justify-center text-[10px] font-bold border border-white/5">3</div>
+              <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">Payment</span>
             </div>
         </div>
       </header>
@@ -318,6 +350,7 @@ export default function App() {
         court: formData.court,
         date: formData.date,
         timeSlots: formData.timeSlots,
+        totalPrice: calculatePrice(formData.timeSlots),
         status: 'confirmed',
         timestamp: Date.now(),
         proofOfPaymentUrl: proofUrl,
@@ -442,13 +475,13 @@ export default function App() {
           </div>
           <div className="hidden md:flex gap-8 items-center">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-white/10 text-white/50 flex items-center justify-center text-[10px] font-bold border border-white/5">1</div>
-              <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">Renter</span>
+              <div className="w-5 h-5 rounded-full bg-[#F9E154] text-[#2D3A2A] flex items-center justify-center text-[10px] font-bold">1</div>
+              <span className="text-[10px] font-bold uppercase text-white tracking-widest">Selection</span>
             </div>
             <div className="w-4 h-[1px] bg-white/10"></div>
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-[#F9E154] text-[#2D3A2A] flex items-center justify-center text-[10px] font-bold">2</div>
-              <span className="text-[10px] font-bold uppercase text-white tracking-widest">Selection</span>
+              <div className="w-5 h-5 rounded-full bg-white/10 text-white/50 flex items-center justify-center text-[10px] font-bold border border-white/5">2</div>
+              <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">Renter</span>
             </div>
             <div className="w-4 h-[1px] bg-white/10"></div>
             <div className="flex items-center gap-2">
@@ -525,7 +558,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="bg-black/20 rounded-2xl p-6 border border-white/5 flex-1 select-none">
+              <div className="hidden md:block bg-black/20 rounded-2xl p-6 border border-white/5 flex-1 select-none">
                 <h2 className="text-white/40 uppercase text-[10px] font-bold tracking-[0.2em] mb-4 italic">Summary</h2>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-sm">
@@ -554,7 +587,19 @@ export default function App() {
                   </div>
                   <div className="pt-4 border-t border-white/10">
                     <div className="text-[10px] font-bold uppercase text-white/40 mb-1">Estimated Cost</div>
-                    <div className="text-2xl font-black text-[#F9E154]">₱{formData.timeSlots.length * 500}.00</div>
+                    <div className="text-2xl font-black text-[#F9E154]">{formatPrice(calculatePrice(formData.timeSlots))}</div>
+                  </div>
+                  
+                  <div className="pt-4 mt-2">
+                    <div className="text-[9px] font-bold uppercase text-white/20 mb-2 tracking-widest border-b border-white/5 pb-1">Price Rates</div>
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-white/30 uppercase tracking-tighter italic">08:00 AM - 04:00 PM</span>
+                      <span className="text-white/50 font-bold">₱500</span>
+                    </div>
+                    <div className="flex justify-between text-[10px] mt-1">
+                      <span className="text-white/30 uppercase tracking-tighter italic">04:00 PM - 08:00 AM</span>
+                      <span className="text-white/50 font-bold">₱550</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -604,6 +649,40 @@ export default function App() {
                 })}
               </div>
 
+              {/* Mobile Summary */}
+              <div className="md:hidden bg-black/20 rounded-2xl p-6 border border-white/5 mb-8 select-none">
+                <h2 className="text-white/40 uppercase text-[10px] font-bold tracking-[0.2em] mb-4 italic">Summary</h2>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-white/40">Date</span>
+                    <span className="text-white font-bold">{new Date(formData.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-white/40">Court</span>
+                    <span className="text-white font-bold">{formData.court}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-white/40">Hours</span>
+                    <span className="text-white font-bold">{formData.timeSlots.length} HR(S)</span>
+                  </div>
+                  <div className="pt-4 border-t border-white/10">
+                    <div className="text-[10px] font-bold uppercase text-white/40 mb-1">Estimated Cost</div>
+                    <div className="text-2xl font-black text-[#F9E154]">{formatPrice(calculatePrice(formData.timeSlots))}</div>
+                  </div>
+
+                  <div className="pt-4 mt-2 grid grid-cols-2 gap-4">
+                    <div className="px-3 py-2 bg-white/5 rounded-lg border border-white/5">
+                      <div className="text-[8px] font-bold uppercase text-white/20 mb-1">Day Rate (8AM-4PM)</div>
+                      <div className="text-xs font-black text-white/60">₱500.00</div>
+                    </div>
+                    <div className="px-3 py-2 bg-white/5 rounded-lg border border-white/5">
+                      <div className="text-[8px] font-bold uppercase text-white/20 mb-1">Night Rate (4PM-8AM)</div>
+                      <div className="text-xs font-black text-white/60">₱550.00</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Non-sticky footer button */}
               <div className="mt-auto pt-8 border-t border-white/10">
                 <button 
@@ -611,7 +690,7 @@ export default function App() {
                   onClick={nextStep}
                   className="w-full bg-[#F9E154] hover:bg-white text-[#2D3A2A] py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest transition-all duration-300 disabled:opacity-10 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-black/20"
                 >
-                  PROCEED TO PAYMENT <ChevronRight size={18} />
+                  NEXT: RENTER DETAILS <ChevronRight size={18} />
                 </button>
               </div>
             </div>
@@ -638,7 +717,7 @@ export default function App() {
       </button>
 
       <h2 className="text-4xl font-black text-white mb-2 uppercase italic">Secure Payment</h2>
-      <p className="text-stone-400 mb-8">Scan to pay ₱{formData.timeSlots.length * 500}.00 via GCash</p>
+      <p className="text-stone-400 mb-8">Scan to pay {formatPrice(calculatePrice(formData.timeSlots))} via GCash</p>
 
       <div className="bg-white p-8 rounded-3xl inline-block mb-8 shadow-2xl">
         <div className="w-48 h-48 bg-[#007DFE] flex flex-col items-center justify-center rounded-xl p-4 relative overflow-hidden">
@@ -760,7 +839,7 @@ export default function App() {
     const stats = {
       total: bookings.length,
       confirmed: bookings.filter(b => b.status === 'confirmed').length,
-      revenue: bookings.filter(b => b.status === 'confirmed').length * 500,
+      revenue: bookings.reduce((acc, b) => acc + (b.totalPrice || 0), 0),
     };
 
     return (
@@ -896,12 +975,12 @@ export default function App() {
       <main className="max-w-7xl mx-auto min-h-screen relative overflow-hidden">
           <AnimatePresence mode="wait">
             {step === STEPS.LANDING && <LandingStep key="landing" nextStep={nextStep} />}
+            {step === STEPS.SELECTION && <SelectionStep key="selection" />}
             {step === STEPS.DETAILS && (
               <DetailsStepInternal 
                 key="details" 
               />
             )}
-            {step === STEPS.SELECTION && <SelectionStep key="selection" />}
             {step === STEPS.PAYMENT && <PaymentStep key="payment" />}
             {step === STEPS.SUCCESS && <SuccessStep key="success" />}
             {step === STEPS.ADMIN && <AdminDashboard key="admin" />}
