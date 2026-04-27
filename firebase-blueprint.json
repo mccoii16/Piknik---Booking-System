@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "Booking": {
+      "title": "Booking",
+      "description": "Represents a court booking by a customer.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "court": { "type": "string", "enum": ["Court 1", "Court 2"] },
+        "timeSlots": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["confirmed", "blocked"] },
+        "timestamp": { "type": "number" },
+        "proofOfPaymentUrl": { "type": "string" }
+      },
+      "required": ["name", "email", "phone", "court", "timeSlots", "status", "timestamp"]
+    }
+  },
+  "firestore": {
+    "bookings": {
+      "schema": "Booking",
+      "description": "Collection of court bookings."
+    }
+  }
+}
