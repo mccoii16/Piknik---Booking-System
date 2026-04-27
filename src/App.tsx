@@ -71,6 +71,7 @@ type FormData = {
   email: string;
   phone: string;
   court: string;
+  date: string; // ISO format YYYY-MM-DD
   timeSlots: string[];
   proofOfPayment: File | null;
 };
@@ -81,6 +82,7 @@ type Booking = {
   email: string;
   phone: string;
   court: string;
+  date: string;
   timeSlots: string[];
   status: 'confirmed' | 'blocked';
   timestamp: number;
@@ -113,6 +115,97 @@ interface FirestoreErrorInfo {
   }
 }
 
+interface DetailsStepProps {
+  prevStep: () => void;
+  nextStep: () => void;
+  formData: FormData;
+  updateFormData: (fields: Partial<FormData>) => void;
+}
+
+const DetailsStep = ({ prevStep, nextStep, formData, updateFormData }: DetailsStepProps) => {
+  const [localData, setLocalData] = React.useState({
+    name: formData.name,
+    email: formData.email,
+    phone: formData.phone
+  });
+
+  const handleNext = () => {
+    updateFormData(localData);
+    nextStep();
+  };
+
+  return (
+    <motion.div 
+      initial={{ x: 20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      className="p-8 md:p-12 flex flex-col min-h-screen"
+    >
+      <header className="flex justify-between items-center mb-12">
+        <button onClick={prevStep} className="flex items-center text-white/40 hover:text-[#F9E154] transition-colors font-bold uppercase text-[10px] tracking-widest">
+          <ChevronLeft size={16} /> Back to Start
+        </button>
+        <div className="flex gap-4 items-center">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-[#F9E154] text-[#2D3A2A] flex items-center justify-center text-[10px] font-bold">1</div>
+              <span className="text-[10px] font-bold uppercase text-white tracking-widest">Renter</span>
+            </div>
+            <div className="w-4 h-[1px] bg-white/10"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-white/10 text-white/50 flex items-center justify-center text-[10px] font-bold border border-white/5">2</div>
+              <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">Selection</span>
+            </div>
+        </div>
+      </header>
+      
+      <div className="max-w-xl mx-auto w-full flex-1">
+        <h2 className="text-3xl md:text-5xl font-black text-white mb-2 uppercase italic tracking-tighter whitespace-nowrap">Renter Details</h2>
+        <p className="text-white/40 mb-8 uppercase text-[10px] font-bold tracking-[0.3em]">Start your championship journey.</p>
+  
+        <div className="space-y-4">
+          <div className="relative group">
+            <User className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-[#E94B3C] transition-colors z-10" size={18} />
+            <input 
+              type="text"
+              placeholder="Full Name"
+              value={localData.name}
+              onChange={(e) => setLocalData(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full bg-white border-2 border-transparent rounded-2xl py-4 pl-14 pr-6 text-[#2D3A2A] font-bold placeholder:text-stone-300 focus:outline-none focus:border-[#F9E154] shadow-2xl transition-all text-lg"
+            />
+          </div>
+          <div className="relative group">
+            <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-[#E94B3C] transition-colors z-10" size={18} />
+            <input 
+              type="email"
+              placeholder="Email Address"
+              value={localData.email}
+              onChange={(e) => setLocalData(prev => ({ ...prev, email: e.target.value }))}
+              className="w-full bg-white border-2 border-transparent rounded-2xl py-4 pl-14 pr-6 text-[#2D3A2A] font-bold placeholder:text-stone-300 focus:outline-none focus:border-[#F9E154] shadow-2xl transition-all text-lg"
+            />
+          </div>
+          <div className="relative group">
+            <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-[#E94B3C] transition-colors z-10" size={18} />
+            <input 
+              type="tel"
+              placeholder="Phone Number"
+              value={localData.phone}
+              onChange={(e) => setLocalData(prev => ({ ...prev, phone: e.target.value }))}
+              className="w-full bg-white border-2 border-transparent rounded-2xl py-4 pl-14 pr-6 text-[#2D3A2A] font-bold placeholder:text-stone-300 focus:outline-none focus:border-[#F9E154] shadow-2xl transition-all text-lg"
+            />
+          </div>
+        </div>
+  
+        <button 
+          disabled={!localData.name || !localData.email || !localData.phone}
+          onClick={handleNext}
+          className="w-full mt-10 bg-[#F9E154] hover:bg-[#E94B3C] text-[#2D3A2A] hover:text-white py-5 rounded-2xl font-bold text-lg uppercase tracking-widest transition-all duration-300 disabled:opacity-20 disabled:cursor-not-allowed group flex items-center justify-center gap-3 shadow-2xl"
+        >
+          SELECT COURT <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
 export default function App() {
   const [step, setStep] = useState(STEPS.LANDING);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -143,6 +236,7 @@ export default function App() {
     email: '',
     phone: '',
     court: 'Court 1',
+    date: new Date().toISOString().split('T')[0],
     timeSlots: [],
     proofOfPayment: null,
   });
@@ -184,9 +278,9 @@ export default function App() {
 
   const bookedSlots = useMemo(() => {
     return bookings
-      .filter(b => b.court === formData.court)
+      .filter(b => b.court === formData.court && b.date === formData.date)
       .flatMap(b => b.timeSlots);
-  }, [bookings, formData.court]);
+  }, [bookings, formData.court, formData.date]);
 
   const updateFormData = (fields: Partial<FormData>) => {
     setFormData(prev => ({ ...prev, ...fields }));
@@ -222,6 +316,7 @@ export default function App() {
         email: formData.email,
         phone: formData.phone,
         court: formData.court,
+        date: formData.date,
         timeSlots: formData.timeSlots,
         status: 'confirmed',
         timestamp: Date.now(),
@@ -311,75 +406,13 @@ export default function App() {
     </motion.div>
   );
 
-  const DetailsStep = () => (
-    <motion.div 
-      initial={{ x: 20, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      className="p-8 md:p-12 flex flex-col min-h-screen"
-    >
-      <header className="flex justify-between items-center mb-12">
-        <button onClick={prevStep} className="flex items-center text-white/40 hover:text-[#F9E154] transition-colors font-bold uppercase text-[10px] tracking-widest">
-          <ChevronLeft size={16} /> Back to Start
-        </button>
-        <div className="flex gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-[#F9E154] text-[#2D3A2A] flex items-center justify-center text-[10px] font-bold">1</div>
-              <span className="text-[10px] font-bold uppercase text-white tracking-widest">Renter</span>
-            </div>
-            <div className="w-4 h-[1px] bg-white/10"></div>
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-white/10 text-white/50 flex items-center justify-center text-[10px] font-bold border border-white/5">2</div>
-              <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">Selection</span>
-            </div>
-        </div>
-      </header>
-      
-      <div className="max-w-xl mx-auto w-full flex-1">
-        <h2 className="text-3xl md:text-5xl font-black text-white mb-2 uppercase italic tracking-tighter whitespace-nowrap">Renter Details</h2>
-        <p className="text-white/40 mb-8 uppercase text-[10px] font-bold tracking-[0.3em]">Start your championship journey.</p>
-
-        <div className="space-y-4">
-          <div className="relative group">
-            <User className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-[#E94B3C] transition-colors z-10" size={18} />
-            <input 
-              type="text"
-              placeholder="Full Name"
-              value={formData.name}
-              onChange={(e) => updateFormData({ name: e.target.value })}
-              className="w-full bg-white border-2 border-transparent rounded-2xl py-4 pl-14 pr-6 text-[#2D3A2A] font-bold placeholder:text-stone-300 focus:outline-none focus:border-[#F9E154] shadow-2xl transition-all text-lg"
-            />
-          </div>
-          <div className="relative group">
-            <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-[#E94B3C] transition-colors z-10" size={18} />
-            <input 
-              type="email"
-              placeholder="Email Address"
-              value={formData.email}
-              onChange={(e) => updateFormData({ email: e.target.value })}
-              className="w-full bg-white border-2 border-transparent rounded-2xl py-4 pl-14 pr-6 text-[#2D3A2A] font-bold placeholder:text-stone-300 focus:outline-none focus:border-[#F9E154] shadow-2xl transition-all text-lg"
-            />
-          </div>
-          <div className="relative group">
-            <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-[#E94B3C] transition-colors z-10" size={18} />
-            <input 
-              type="tel"
-              placeholder="Phone Number"
-              value={formData.phone}
-              onChange={(e) => updateFormData({ phone: e.target.value })}
-              className="w-full bg-white border-2 border-transparent rounded-2xl py-4 pl-14 pr-6 text-[#2D3A2A] font-bold placeholder:text-stone-300 focus:outline-none focus:border-[#F9E154] shadow-2xl transition-all text-lg"
-            />
-          </div>
-        </div>
-
-        <button 
-          disabled={!formData.name || !formData.email || !formData.phone}
-          onClick={nextStep}
-          className="w-full mt-10 bg-[#F9E154] hover:bg-[#E94B3C] text-[#2D3A2A] hover:text-white py-5 rounded-2xl font-bold text-lg uppercase tracking-widest transition-all duration-300 disabled:opacity-20 disabled:cursor-not-allowed group flex items-center justify-center gap-3 shadow-2xl"
-        >
-          SELECT COURT <ChevronRight className="group-hover:translate-x-1 transition-transform" />
-        </button>
-      </div>
-    </motion.div>
+  const DetailsStepInternal = () => (
+    <DetailsStep 
+      prevStep={prevStep} 
+      nextStep={nextStep} 
+      formData={formData} 
+      updateFormData={updateFormData} 
+    />
   );
 
   const SelectionStep = () => {
@@ -387,6 +420,12 @@ export default function App() {
       const h = i % 12 || 12;
       const ampm = i < 12 ? 'AM' : 'PM';
       return `${h}:00 ${ampm}`;
+    });
+
+    const dates = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      return d;
     });
 
     return (
@@ -419,109 +458,162 @@ export default function App() {
           </div>
         </header>
 
-        <main className="flex-1 flex flex-col md:flex-row p-4 md:p-8 gap-6 md:gap-8 overflow-y-auto md:overflow-hidden">
-          {/* Left Panel: Court Toggle */}
-          <div className="w-full md:w-1/3 flex flex-col gap-6 shrink-0 h-fit md:h-full">
-            <div className="bg-black/20 rounded-2xl p-6 border border-white/5">
-              <h2 className="text-[#F9E154] uppercase text-[10px] font-bold tracking-[0.2em] mb-4">01. Select Court</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {['Court 1', 'Court 2'].map(c => (
-                  <button
-                    key={c}
-                    onClick={() => updateFormData({ court: c })}
-                    className={`py-3.5 rounded-xl border-2 transition-colors font-bold text-sm uppercase ${
-                      formData.court === c 
-                      ? 'bg-[#F9E154] text-[#2D3A2A] border-[#F9E154]' 
-                      : 'bg-white/5 text-white/40 border-white/5 hover:border-white/20'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
+        <main className="flex-1 flex flex-col p-4 md:p-8 gap-6 md:gap-8 overflow-y-auto">
+          {/* Top Panel: Date Selector */}
+          <div className="w-full bg-black/20 rounded-2xl p-4 border border-white/5">
+            <div className="flex items-center gap-6 mb-6">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-white/10 border border-white/10"></div>
+                <span className="text-[10px] font-bold uppercase text-white/40 tracking-widest">Open</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-[#F9E154]"></div>
+                <span className="text-[10px] font-bold uppercase text-[#F9E154] tracking-widest">Held</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-white/40"></div>
+                <span className="text-[10px] font-bold uppercase text-white/20 tracking-widest">Booked</span>
               </div>
             </div>
-
-            <div className="bg-black/20 rounded-2xl p-6 border border-white/5 flex-1 select-none">
-              <h2 className="text-white/40 uppercase text-[10px] font-bold tracking-[0.2em] mb-4 italic">Summary</h2>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-white/40">Hours</span>
-                  <span className="text-white font-bold">{formData.timeSlots.length} HR(S)</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-white/40">Time Slot</span>
-                  <div className="text-right">
-                    {formData.timeSlots.length > 0 ? (
-                      formData.timeSlots.map(s => (
-                        <div key={s} className="text-[#F9E154] font-bold">{s}</div>
-                      ))
-                    ) : (
-                      <span className="text-white/20 italic">Not Selected</span>
-                    )}
-                  </div>
-                </div>
-                <div className="pt-4 border-t border-white/10">
-                  <div className="text-[10px] font-bold uppercase text-white/40 mb-1">Estimated Cost</div>
-                  <div className="text-2xl font-black text-[#F9E154]">₱{formData.timeSlots.length * 500}.00</div>
-                </div>
-              </div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[#F9E154] uppercase text-[10px] font-bold tracking-[0.2em]">01. Select Date</h2>
             </div>
-          </div>
+            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+              {dates.map((d) => {
+                const dateStr = d.toISOString().split('T')[0];
+                const isSelected = formData.date === dateStr;
+                const day = d.toLocaleDateString('en-US', { weekday: 'short' });
+                const dateNum = d.getDate();
 
-          {/* Right Panel: Time Grid */}
-          <div className="w-full md:w-2/3 bg-white/5 rounded-3xl p-6 md:p-8 border border-white/10 flex flex-col overflow-y-auto">
-            <div className="mb-6 flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-4">
-                <h2 className="text-[#F9E154] uppercase text-[10px] font-bold tracking-[0.2em] whitespace-nowrap">02. Pick Your Time</h2>
-                <p className="text-white/40 text-[10px] whitespace-nowrap opacity-60">24-hour service active</p>
-              </div>
-              
-              <div className="flex flex-wrap gap-x-3 gap-y-2 text-[8px] uppercase font-bold tracking-widest text-white/30 border-t border-white/5 pt-4">
-
-                <div className="flex items-center gap-1.5 whitespace-nowrap"><span className="w-2.5 h-2.5 bg-white/10 rounded-sm border border-white/10"></span> Available</div>
-                <div className="flex items-center gap-1.5 whitespace-nowrap"><span className="w-2.5 h-2.5 bg-[#F9E154] rounded-sm"></span> Selected</div>
-                <div className="flex items-center gap-1.5 whitespace-nowrap"><span className="w-2.5 h-2.5 bg-white/40 rounded-sm"></span> Booked</div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 mb-8 lowercase">
-              {hours.map(h => {
-                const isBooked = bookedSlots.includes(h);
-                const isSelected = formData.timeSlots.includes(h);
-                
                 return (
                   <button
-                    key={h}
-                    disabled={isBooked}
-                    onClick={() => {
-                      const newSlots = isSelected 
-                        ? formData.timeSlots.filter(s => s !== h)
-                        : [...formData.timeSlots, h];
-                      updateFormData({ timeSlots: newSlots });
-                    }}
-                    className={`py-3 rounded-lg border-2 transition-colors font-bold text-[10px] uppercase tracking-tighter ${
-                      isSelected
-                        ? 'bg-[#F9E154] text-[#2D3A2A] border-[#F9E154]' 
-                        : isBooked
-                          ? 'bg-white/10 text-white/10 border-transparent cursor-not-allowed' 
-                          : 'bg-white/5 text-white/60 border-transparent hover:border-white/20'
+                    key={dateStr}
+                    onClick={() => updateFormData({ date: dateStr, timeSlots: [] })}
+                    className={`flex flex-col items-center justify-center min-w-[56px] h-16 rounded-xl border-2 transition-all ${
+                      isSelected 
+                      ? 'bg-[#F9E154] text-[#2D3A2A] border-[#F9E154]' 
+                      : 'bg-white/5 border-transparent text-white/40 hover:border-white/10'
                     }`}
                   >
-                    {h}
+                    <span className={`text-[10px] font-bold uppercase mb-1 ${isSelected ? 'text-[#2D3A2A]' : 'text-white/40'}`}>{day}</span>
+                    <span className="text-lg font-black">{dateNum}</span>
                   </button>
                 );
               })}
             </div>
+          </div>
 
-            {/* Non-sticky footer button */}
-            <div className="mt-auto pt-8 border-t border-white/10">
-              <button 
-                disabled={formData.timeSlots.length === 0}
-                onClick={nextStep}
-                className="w-full bg-[#F9E154] hover:bg-white text-[#2D3A2A] py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest transition-all duration-300 disabled:opacity-10 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-black/20"
-              >
-                PROCEED TO PAYMENT <ChevronRight size={18} />
-              </button>
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 flex-1">
+            {/* Left Panel: Court Toggle */}
+            <div className="w-full md:w-1/3 flex flex-col gap-6 shrink-0 h-fit md:h-auto">
+              <div className="bg-black/20 rounded-2xl p-6 border border-white/5">
+                <h2 className="text-[#F9E154] uppercase text-[10px] font-bold tracking-[0.2em] mb-4">02. Select Court</h2>
+                <div className="grid grid-cols-2 gap-3">
+                  {['Court 1', 'Court 2'].map(c => (
+                    <button
+                      key={c}
+                      onClick={() => updateFormData({ court: c, timeSlots: [] })}
+                      className={`py-3.5 rounded-xl border-2 transition-colors font-bold text-sm uppercase ${
+                        formData.court === c 
+                        ? 'bg-[#F9E154] text-[#2D3A2A] border-[#F9E154]' 
+                        : 'bg-white/5 text-white/40 border-white/5 hover:border-white/20'
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-black/20 rounded-2xl p-6 border border-white/5 flex-1 select-none">
+                <h2 className="text-white/40 uppercase text-[10px] font-bold tracking-[0.2em] mb-4 italic">Summary</h2>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-white/40">Date</span>
+                    <span className="text-white font-bold">{new Date(formData.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-white/40">Court</span>
+                    <span className="text-white font-bold">{formData.court}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-white/40">Hours</span>
+                    <span className="text-white font-bold">{formData.timeSlots.length} HR(S)</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-white/40">Time Slot</span>
+                    <div className="text-right">
+                      {formData.timeSlots.length > 0 ? (
+                        formData.timeSlots.map(s => (
+                          <div key={s} className="text-[#F9E154] font-bold">{s}</div>
+                        ))
+                      ) : (
+                        <span className="text-white/20 italic">Not Selected</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-white/10">
+                    <div className="text-[10px] font-bold uppercase text-white/40 mb-1">Estimated Cost</div>
+                    <div className="text-2xl font-black text-[#F9E154]">₱{formData.timeSlots.length * 500}.00</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Panel: Time Grid */}
+            <div className="w-full md:w-2/3 bg-white/5 rounded-3xl p-6 md:p-8 border border-white/10 flex flex-col overflow-y-auto">
+              <div className="mb-6 flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-4">
+                  <h2 className="text-[#F9E154] uppercase text-[10px] font-bold tracking-[0.2em] whitespace-nowrap">03. Pick Your Time</h2>
+                  <p className="text-white/40 text-[10px] whitespace-nowrap opacity-60">24-hour service active</p>
+                </div>
+                
+                <div className="flex flex-wrap gap-x-3 gap-y-2 text-[8px] uppercase font-bold tracking-widest text-white/30 border-t border-white/5 pt-4">
+                  <div className="flex items-center gap-1.5 whitespace-nowrap"><span className="w-2.5 h-2.5 bg-white/10 rounded-sm border border-white/10"></span> Open</div>
+                  <div className="flex items-center gap-1.5 whitespace-nowrap"><span className="w-2.5 h-2.5 bg-[#F9E154] rounded-sm"></span> Held</div>
+                  <div className="flex items-center gap-1.5 whitespace-nowrap"><span className="w-2.5 h-2.5 bg-white/40 rounded-sm"></span> Booked</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-2 mb-8 lowercase">
+                {hours.map(h => {
+                  const isBooked = bookedSlots.includes(h);
+                  const isSelected = formData.timeSlots.includes(h);
+                  
+                  return (
+                    <button
+                      key={h}
+                      disabled={isBooked}
+                      onClick={() => {
+                        const newSlots = isSelected 
+                          ? formData.timeSlots.filter(s => s !== h)
+                          : [...formData.timeSlots, h];
+                        updateFormData({ timeSlots: newSlots });
+                      }}
+                      className={`py-3 rounded-lg border-2 transition-colors font-bold text-[10px] uppercase tracking-tighter ${
+                        isSelected
+                          ? 'bg-[#F9E154] text-[#2D3A2A] border-[#F9E154]' 
+                          : isBooked
+                            ? 'bg-white/10 text-white/10 border-transparent cursor-not-allowed' 
+                            : 'bg-white/5 text-white/60 border-transparent hover:border-white/20'
+                      }`}
+                    >
+                      {h}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Non-sticky footer button */}
+              <div className="mt-auto pt-8 border-t border-white/10">
+                <button 
+                  disabled={formData.timeSlots.length === 0}
+                  onClick={nextStep}
+                  className="w-full bg-[#F9E154] hover:bg-white text-[#2D3A2A] py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest transition-all duration-300 disabled:opacity-10 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-black/20"
+                >
+                  PROCEED TO PAYMENT <ChevronRight size={18} />
+                </button>
+              </div>
             </div>
           </div>
         </main>
@@ -636,6 +728,10 @@ export default function App() {
         <div className="flex justify-between mb-4 border-b border-white/5 pb-4">
           <span className="text-stone-500 uppercase text-xs font-bold tracking-widest">Guest</span>
           <span className="text-white font-bold">{formData.name}</span>
+        </div>
+        <div className="flex justify-between mb-4 border-b border-white/5 pb-4">
+          <span className="text-stone-500 uppercase text-xs font-bold tracking-widest">Date</span>
+          <span className="text-white font-bold">{new Date(formData.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
         </div>
         <div className="flex justify-between mb-4 border-b border-white/5 pb-4">
           <span className="text-stone-500 uppercase text-xs font-bold tracking-widest">Location</span>
@@ -798,14 +894,18 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#2D3A2A] text-white font-sans selection:bg-[#F9E154] selection:text-[#2D3A2A]">
       <main className="max-w-7xl mx-auto min-h-screen relative overflow-hidden">
-        <AnimatePresence mode="wait">
-          {step === STEPS.LANDING && <LandingStep key="landing" />}
-          {step === STEPS.DETAILS && <DetailsStep key="details" />}
-          {step === STEPS.SELECTION && <SelectionStep key="selection" />}
-          {step === STEPS.PAYMENT && <PaymentStep key="payment" />}
-          {step === STEPS.SUCCESS && <SuccessStep key="success" />}
-          {step === STEPS.ADMIN && <AdminDashboard key="admin" />}
-        </AnimatePresence>
+          <AnimatePresence mode="wait">
+            {step === STEPS.LANDING && <LandingStep key="landing" nextStep={nextStep} />}
+            {step === STEPS.DETAILS && (
+              <DetailsStepInternal 
+                key="details" 
+              />
+            )}
+            {step === STEPS.SELECTION && <SelectionStep key="selection" />}
+            {step === STEPS.PAYMENT && <PaymentStep key="payment" />}
+            {step === STEPS.SUCCESS && <SuccessStep key="success" />}
+            {step === STEPS.ADMIN && <AdminDashboard key="admin" />}
+          </AnimatePresence>
 
         {/* Hidden Admin Entry (Bottom Right) */}
         {step === STEPS.LANDING && (
