@@ -422,7 +422,7 @@ export default function App() {
           whileTap={{ scale: 0.95 }}
           onClick={nextStep}
           id="btn-book-now"
-          className="relative z-20 bg-[#F9E154] text-[#2D3A2A] px-8 py-3.5 rounded-full text-xl font-black uppercase tracking-widest transition-all hover:bg-white hover:text-[#E94B3C] shadow-2xl hover:shadow-[#F9E154]/20 border-4 border-transparent hover:border-[#E94B3C]"
+          className="relative z-20 bg-[#F9E154] text-[#2D3A2A] px-8 py-2.5 rounded-sm text-xs font-black uppercase tracking-[0.3em] transition-all hover:bg-white hover:text-[#E94B3C] shadow-2xl hover:shadow-[#F9E154]/20 border-2 border-transparent hover:border-[#E94B3C]"
         >
           Book Now
         </motion.button>
