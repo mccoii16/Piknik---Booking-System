@@ -229,9 +229,9 @@ const DetailsStep = ({ prevStep, nextStep, formData, updateFormData }: DetailsSt
         <button 
           disabled={!localData.name || !localData.email || !localData.phone}
           onClick={handleNext}
-          className="w-full mt-10 bg-[#F9E154] hover:bg-[#E94B3C] text-[#2D3A2A] hover:text-white py-5 rounded-2xl font-bold text-lg uppercase tracking-widest transition-all duration-300 disabled:opacity-20 disabled:cursor-not-allowed group flex items-center justify-center gap-3 shadow-2xl"
+          className="w-full mt-10 bg-[#F9E154] hover:bg-[#E94B3C] text-[#2D3A2A] hover:text-white py-4 rounded-sm font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-20 disabled:cursor-not-allowed group flex items-center justify-center gap-3 shadow-2xl border-2 border-transparent hover:border-[#E94B3C]"
         >
-          SELECT COURT <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+          PROCEED TO PAYMENT <ChevronRight className="group-hover:translate-x-1 transition-transform" size={18} />
         </button>
       </div>
     </motion.div>
@@ -688,7 +688,7 @@ export default function App() {
                 <button 
                   disabled={formData.timeSlots.length === 0}
                   onClick={nextStep}
-                  className="w-full bg-[#F9E154] hover:bg-white text-[#2D3A2A] py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest transition-all duration-300 disabled:opacity-10 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-black/20"
+                  className="w-full bg-[#F9E154] hover:bg-white text-[#2D3A2A] py-3.5 rounded-sm font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-10 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-black/20 border-2 border-transparent hover:border-[#E94B3C]"
                 >
                   NEXT: RENTER DETAILS <ChevronRight size={18} />
                 </button>
@@ -710,74 +710,96 @@ export default function App() {
     <motion.div 
       initial={{ x: 20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="p-8 md:p-12 text-center"
+      className="p-6 md:p-12 flex flex-col min-h-screen overflow-y-auto"
     >
-      <button onClick={prevStep} className="mb-8 flex items-center text-stone-400 hover:text-[#F9E154]">
-        <ChevronLeft size={20} /> Back
-      </button>
-
-      <h2 className="text-4xl font-black text-white mb-2 uppercase italic">Secure Payment</h2>
-      <p className="text-stone-400 mb-8">Scan to pay {formatPrice(calculatePrice(formData.timeSlots))} via GCash</p>
-
-      <div className="bg-white p-8 rounded-3xl inline-block mb-8 shadow-2xl">
-        <div className="w-48 h-48 bg-[#007DFE] flex flex-col items-center justify-center rounded-xl p-4 relative overflow-hidden">
-          <div className="bg-white w-full h-full rounded flex items-center justify-center text-[#007DFE] font-black text-4xl">
-            GCash
-          </div>
-          <div className="absolute top-2 right-2 flex gap-1">
-             <div className="w-2 h-2 bg-white rounded-full opacity-50" />
-             <div className="w-2 h-2 bg-white rounded-full opacity-50" />
-          </div>
-        </div>
-        <p className="text-[#2D3A2A] font-bold mt-4">0917-888-2024</p>
-        <p className="text-stone-400 text-xs">PIKNIK PREMIER INC.</p>
-      </div>
-
-      <div className="mb-10">
-        <input 
-          type="file" 
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          accept="image/*"
-        />
-        <button 
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full border-2 border-dashed border-stone-700 hover:border-[#F9E154] rounded-2xl p-8 flex flex-col items-center gap-2 transition-all group"
-        >
-          {formData.proofOfPayment ? (
-            <div className="flex flex-col items-center gap-2">
-              <CheckCircle2 className="text-[#F9E154]" />
-              <span className="text-white font-bold">{formData.proofOfPayment.name}</span>
-              <span className="text-stone-500 text-xs">Click to change</span>
-            </div>
-          ) : (
-            <>
-              <Upload className="text-stone-500 group-hover:text-[#F9E154]" />
-              <span className="text-stone-400 group-hover:text-white">Upload Proof of Payment</span>
-            </>
-          )}
+      <header className="flex justify-between items-center mb-12">
+        <button onClick={prevStep} className="flex items-center text-white/40 hover:text-[#F9E154] transition-colors font-bold uppercase text-[10px] tracking-widest">
+          <ChevronLeft size={16} /> Back to Renter
         </button>
-      </div>
+        <div className="flex gap-4 items-center">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-white/10 text-white/50 flex items-center justify-center text-[10px] font-bold border border-white/5">1</div>
+              <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">Selection</span>
+            </div>
+            <div className="w-4 h-[1px] bg-white/10"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-white/10 text-white/50 flex items-center justify-center text-[10px] font-bold border border-white/5">2</div>
+              <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">Renter</span>
+            </div>
+            <div className="w-4 h-[1px] bg-white/10"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-[#F9E154] text-[#2D3A2A] flex items-center justify-center text-[10px] font-bold">3</div>
+              <span className="text-[10px] font-bold uppercase text-white tracking-widest">Payment</span>
+            </div>
+        </div>
+      </header>
 
-      <button 
-        disabled={!formData.proofOfPayment || isVerifying}
-        onClick={handleVerify}
-        className="w-full bg-[#E94B3C] text-white py-5 rounded-2xl font-black text-xl uppercase tracking-widest transition-all hover:bg-white hover:text-[#E94B3C] disabled:opacity-30 disabled:cursor-not-allowed overflow-hidden relative"
-      >
-        {isVerifying ? (
-          <motion.div 
-            initial={{ y: 20 }}
-            animate={{ y: 0 }}
-            className="flex items-center justify-center gap-3"
+      <div className="max-w-xl mx-auto w-full flex-1 flex flex-col text-center">
+        <h2 className="text-3xl md:text-5xl font-black text-white mb-2 uppercase italic tracking-tighter">Secure Payment</h2>
+        <p className="text-white/40 mb-8 uppercase text-[10px] font-bold tracking-[0.3em]">Scan to pay {formatPrice(calculatePrice(formData.timeSlots))} via GCash</p>
+
+        <div className="bg-white p-8 rounded-3xl inline-block mb-8 shadow-2xl mx-auto">
+          <div className="w-48 h-48 bg-[#007DFE] flex flex-col items-center justify-center rounded-xl p-4 relative overflow-hidden">
+            <div className="bg-white w-full h-full rounded flex items-center justify-center text-[#007DFE] font-black text-4xl">
+              GCash
+            </div>
+            <div className="absolute top-2 right-2 flex gap-1">
+               <div className="w-2 h-2 bg-white rounded-full opacity-50" />
+               <div className="w-2 h-2 bg-white rounded-full opacity-50" />
+            </div>
+          </div>
+          <p className="text-[#2D3A2A] font-bold mt-4">0917-888-2024</p>
+          <p className="text-stone-400 text-xs uppercase font-bold tracking-widest">PIKNIK PREMIER INC.</p>
+        </div>
+
+        <div className="mb-10">
+          <input 
+            type="file" 
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept="image/*"
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full border-2 border-dashed border-white/10 hover:border-[#F9E154] bg-white/5 rounded-2xl p-8 flex flex-col items-center gap-2 transition-all group"
           >
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            Verifying Transaction...
-          </motion.div>
-        ) : (
-          "VERIFY & CONFIRM"
-        )}
-      </button>
+            {formData.proofOfPayment ? (
+              <div className="flex flex-col items-center gap-2">
+                <CheckCircle2 className="text-[#F9E154]" />
+                <span className="text-white font-bold text-sm">{formData.proofOfPayment.name}</span>
+                <span className="text-white/20 text-[10px] uppercase font-bold tracking-widest">Click to change</span>
+              </div>
+            ) : (
+              <>
+                <Upload className="text-white/20 group-hover:text-[#F9E154] transition-colors" />
+                <span className="text-white/40 group-hover:text-white transition-colors uppercase text-[10px] font-bold tracking-widest">Upload Proof of Payment</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        <div className="mt-auto pb-12">
+          <button 
+            disabled={!formData.proofOfPayment || isVerifying}
+            onClick={handleVerify}
+            className="w-full bg-[#E94B3C] text-white py-4 rounded-sm font-black text-sm uppercase tracking-[0.2em] transition-all hover:bg-white hover:text-[#E94B3C] disabled:opacity-30 disabled:cursor-not-allowed overflow-hidden relative border-2 border-transparent hover:border-[#E94B3C] shadow-2xl"
+          >
+            {isVerifying ? (
+              <motion.div 
+                initial={{ y: 20 }}
+                animate={{ y: 0 }}
+                className="flex items-center justify-center gap-3"
+              >
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Verifying Transaction...
+              </motion.div>
+            ) : (
+              "VERIFY & CONFIRM"
+            )}
+          </button>
+        </div>
+      </div>
     </motion.div>
   );
 
